@@ -1,9 +1,11 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import com.shubham.lightbill.lightbill_backend.constants.OtpType;
+import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.util.Date;
 
 @Entity
 @Getter
@@ -12,8 +14,12 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class Otp {
-    @Id
-    private String userName;
+    @EmbeddedId
+    private OtpCompositeKey key;
+
     @Column(nullable = false)
     private String otp;
+
+    @UpdateTimestamp
+    private Date updatedTime;
 }

@@ -1,43 +1,30 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
+import com.shubham.lightbill.lightbill_backend.constants.PaymentMethod;
 import com.shubham.lightbill.lightbill_backend.constants.TransactionStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.*;
 
-import java.time.Instant;
-
-@Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String txnId;
 
-    @ManyToOne
-    @JoinColumn(name = "userId", referencedColumnName = "userId")
-    private User user;
-
-    @OneToOne
-    @JoinColumn(name = "billId", referencedColumnName = "billId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billId", referencedColumnName = "billId", nullable = false)
     private Bill bill;
 
+    @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
-    private Integer amount;
+    private PaymentMethod paymentMethod;
 
-    @Enumerated(EnumType.STRING)
-    private TransactionStatus status;
-
-    @CreationTimestamp
-    private Instant createdAt;
-
-    @UpdateTimestamp
-    private Instant updatedAt;
+    @Enumerated(value = EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus transactionStatus;
 }

@@ -1,6 +1,9 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.shubham.lightbill.lightbill_backend.constants.TransactionStatus;
+import com.shubham.lightbill.lightbill_backend.constants.WalletStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,18 +13,20 @@ import lombok.*;
 @Setter
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Wallet {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, unique = true)
     private String walletId;
 
-    @OneToOne
-    @JoinColumn(name = "userId", referencedColumnName = "userId")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId", referencedColumnName = "userId", nullable = false, unique = true)
+    @JsonManagedReference
     private User user;
 
     @Enumerated(EnumType.STRING)
-    private TransactionStatus status;
+    private WalletStatus status;
 
     @Column(nullable = false)
-    private Integer Balance;
+    private Integer balance;
 }
