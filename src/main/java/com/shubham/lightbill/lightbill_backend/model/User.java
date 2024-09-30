@@ -1,6 +1,8 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.shubham.lightbill.lightbill_backend.constants.Role;
 import jakarta.persistence.*;
@@ -33,16 +35,21 @@ public class User {
     @Column(nullable = false)
     private String address;
 
+    @Column(unique = true)
+    private String meterNumber;
+
     @Column(nullable = false)
     @Enumerated(value = EnumType.STRING)
+    @JsonIgnore
     private Role role;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne()
     @JoinColumn(name = "walletId", referencedColumnName = "walletId")
-    @JsonBackReference
+    @JsonIgnoreProperties(value = {"user"})
     private Wallet wallet;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties(value = {"user", "txnList"})
     private List<Bill> bills;
 
     @Column(nullable = false)

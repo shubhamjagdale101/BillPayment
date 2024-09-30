@@ -8,13 +8,13 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FilterDto {
-    @NotBlank
+    @NotBlank(message = "blank filter field")
     private String filter;
 
-    @NotBlank
+    @NotBlank(message = "blank type field")
     private String type;
 
-    @NotBlank
+    @NotBlank(message = "blank value filed")
     private String value;
 
     @Builder.Default

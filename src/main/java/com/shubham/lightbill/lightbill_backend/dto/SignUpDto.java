@@ -15,11 +15,12 @@ import lombok.*;
 public class SignUpDto {
     @NotBlank(message = "Name should not be blank")
     private String name;
-    @Email(message = "Plz Enter Valid Email")
+    @Email(message = "Invalid Email")
     private String email;
-    @Pattern(regexp = "^[789]\\\\d{9}$", message = "Invalid Phone Number")
+    @Pattern(regexp = "^[789]\\d{9}$", message = "Invalid Phone Number")
     private String phNo;
     @NotBlank
     private String address;
+    private String meterNumber;
     private Role role;
 }

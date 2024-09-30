@@ -33,11 +33,13 @@ public class ExcelService {
     private BillService billService;
 
     public SignUpDto convertToSignUpDto(Row row){
-        String name, email, phoneNo, address, role;
+        String name, email, phoneNo, address, phNo;
         name = row.getCell(0).getStringCellValue();
         email = row.getCell(1).getStringCellValue();
         address = row.getCell(3).getStringCellValue();
-        role = row.getCell(4).getStringCellValue();
+        phNo = row.getCell(4).getStringCellValue();
+        Role role = Role.CUSTOMER;
+
 
         if(row.getCell(2).getCellType() == CellType.STRING) phoneNo = row.getCell(2).getStringCellValue();
         else phoneNo = (String) String.valueOf(row.getCell(2).getNumericCellValue());
@@ -46,7 +48,8 @@ public class ExcelService {
                 .address(address)
                 .name(name)
                 .email(email)
-                .role(Role.valueOf(role))
+                .role(role)
+                .phNo(phNo)
                 .build();
     }
 
@@ -55,16 +58,12 @@ public class ExcelService {
         String monthAndYear = row.getCell(1).getStringCellValue();
         Integer unitConsumption = (int) row.getCell(2).getNumericCellValue();
         Date dueDate = row.getCell(3).getDateCellValue();
-        Integer discount = (int) row.getCell(4).getNumericCellValue();
-        Integer amount = (int) row.getCell(4).getNumericCellValue();
 
         return BillDto.builder()
                 .userId(userId)
                 .monthAndYear(monthAndYear)
                 .unitConsumption(unitConsumption)
                 .dueDate(dueDate)
-                .discount(discount)
-                .amount(amount)
                 .build();
     }
 
@@ -81,18 +80,16 @@ public class ExcelService {
                     continue;
                 }
 
-                List<Object> res = new ArrayList<>();
                 if(className.equals(User.class.getName())){
                     SignUpDto signUp = convertToSignUpDto(currRow);
-                    res = authService.signUpUser(signUp);
+                    User user = authService.signUpUser(signUp);
+                    finalResult.add(user);
                 }
                 else if(className.equals(Bill.class.getName())){
                     BillDto billDto = convertToBillDto(currRow);
                     Bill bill = billService.addBill(billDto);
                     finalResult.add(bill);
                 }
-
-                finalResult.addAll(res);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

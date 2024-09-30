@@ -1,5 +1,6 @@
 package com.shubham.lightbill.lightbill_backend.service;
 
+import com.shubham.lightbill.lightbill_backend.configuration.JwtUtil;
 import com.shubham.lightbill.lightbill_backend.constants.OtpType;
 import com.shubham.lightbill.lightbill_backend.constants.Role;
 import com.shubham.lightbill.lightbill_backend.constants.WalletStatus;
@@ -11,24 +12,18 @@ import com.shubham.lightbill.lightbill_backend.model.Wallet;
 import com.shubham.lightbill.lightbill_backend.repository.OtpRepository;
 import com.shubham.lightbill.lightbill_backend.repository.UserRepository;
 import com.shubham.lightbill.lightbill_backend.repository.WalletRepository;
-import com.shubham.lightbill.lightbill_backend.response.ApiResponse;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.Cookie;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,6 +42,8 @@ public class AuthService {
     private IdGeneratorService idGeneratorService;
     @Autowired
     private OtpRepository otpRepository;
+    @Autowired
+    private JwtUtil jwtUtil;
     @Value("${otp.Expiration.time}")
     private long otpExpirationTime;
 
@@ -59,13 +56,22 @@ public class AuthService {
         threadPool.submitTask(task);
     }
 
+    public Cookie generateCookie(String name, String value){
+        Cookie cookie = new Cookie(name, URLEncoder.encode(value));
+        cookie.setHttpOnly(true); // Prevent JavaScript access to the cookie
+        cookie.setSecure(false);   // Set to false for HTTP
+        cookie.setPath("/");       // Cookie accessible to the whole application
+        cookie.setMaxAge(60 * 60); // Set cookie expiry (1 hour)
+        return cookie;
+    }
+
     public User generateUser(SignUpDto req){
         User user = User.builder()
                 .userId(idGeneratorService.generateId(User.class.getName(), String.valueOf(req.getRole())))
                 .name(req.getName())
                 .email(req.getEmail())
                 .phNo(req.getPhNo())
-                .address(req.getPhNo())
+                .address(req.getAddress())
                 .role(req.getRole())
                 .isActive(true)
                 .isBlocked(false)
@@ -83,17 +89,17 @@ public class AuthService {
         return walletRepository.save(wallet);
     }
 
-    public List<Object> signUpUser(@Valid SignUpDto req){
+    public User signUpUser(@Valid SignUpDto req){
         User user = generateUser(req);
-        Wallet wallet = generateWallet(user);
 
-        user.setWallet(wallet);
-        userRepository.save(user);
+        if(user.getRole() == Role.CUSTOMER){
+            Wallet wallet = generateWallet(user);
+            user.setWallet(wallet);
+            user.setMeterNumber(idGeneratorService.generateId("METER", "Meter"));
+            userRepository.save(user);
+        }
 
-        List<Object> res = new ArrayList<>();
-        res.add(user);
-        res.add(wallet);
-        return res;
+        return user;
     }
 
     public Otp generateOtp(User user, String generatedOtp){

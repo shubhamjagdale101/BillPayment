@@ -1,35 +1,16 @@
 package com.shubham.lightbill.lightbill_backend.controller;
 
-import com.lowagie.text.DocumentException;
 import com.shubham.lightbill.lightbill_backend.annotation.WithRateLimitProtection;
-import com.shubham.lightbill.lightbill_backend.model.Consumption;
 import com.shubham.lightbill.lightbill_backend.response.ApiResponse;
 import com.shubham.lightbill.lightbill_backend.service.PdfService;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
-import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.apache.tomcat.util.http.fileupload.ByteArrayOutputStream;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
-import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.format.TextStyle;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+
 
 @RestController
 @RequestMapping("/invoice")

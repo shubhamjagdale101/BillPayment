@@ -26,13 +26,5 @@ public class BillDto {
     @NotNull(message = "Due date cannot be null")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date dueDate;
-
-    @Min(value = 0, message = "Discount must be non-negative")
-    @NotNull(message = "Discount cannot be null")
-    private Integer discount;
-
-    @Min(value = 0, message = "Amount must be non-negative")
-    @NotNull(message = "Amount cannot be null")
-    private Integer amount;
 }
 

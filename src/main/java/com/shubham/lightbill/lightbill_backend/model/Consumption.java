@@ -1,5 +1,8 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
+import lombok.Getter;
+
+@Getter
 public class Consumption {
     private String month;
     private String year;
@@ -12,4 +15,3 @@ public class Consumption {
         this.amount = amount;
     }
 }
-

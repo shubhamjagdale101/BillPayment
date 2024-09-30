@@ -4,12 +4,11 @@ import com.cloudinary.Cloudinary;
 import com.lowagie.text.DocumentException;
 import com.shubham.lightbill.lightbill_backend.model.Consumption;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -34,6 +33,7 @@ public class PdfService {
 
     @Autowired
     private ThreadPoolService threadPoolService;
+    private static final Logger logger = LoggerFactory.getLogger(PdfService.class);
 
     public String prepareInvoiceHtmlFile(){
         String customerName = "John Doe";
@@ -136,43 +136,48 @@ public class PdfService {
     }
 
     public void sendInvoiceOnMail(String email) throws IOException, MessagingException {
-        // Generate the PDF and write it to a temporary file
-        ByteArrayOutputStream pdfOutputStream = generateInvoicePdf();
-        File tempPdfFile = null;
-
-        // Create a temporary file to store the PDF
-        tempPdfFile = File.createTempFile("invoice", ".pdf");
-
-        try (FileOutputStream fos = new FileOutputStream(tempPdfFile)) {
-            fos.write(pdfOutputStream.toByteArray());
-        }
-
-        File attachment = tempPdfFile;
         Runnable task = () -> {
-            String subject = "Reminder: Electricity Bill for [Month, Year]";
-            String customerName = "shubham";
-            String month = "September", year = "2024";
-            String attachmentFileName = "Invoice";
-
-            String body = "Dear " + customerName + ",\n\n"
-                    + "I hope this message finds you well.\n\n"
-                    + "Please find attached your electricity bill for the month of " + month + ", " + year + ". We kindly request you to review the bill, which provides a detailed breakdown of your electricity usage and charges during the specified period.\n\n"
-                    + "If you have any questions or concerns regarding the bill, feel free to contact our support team, and we’ll be happy to assist you.\n\n"
-                    + "We appreciate your prompt attention to this matter. Kindly make the payment by the due date to avoid any service interruptions.\n\n"
-                    + "Thank you for choosing our service.\n\n"
-                    + "Best regards,\n"
-                    + "[Your Name]\n"
-                    + "[Your Company Name]\n"
-                    + "[Contact Information]";
+            File tempPdfFile = null;
             try {
-                emailService.sendMailWithInvoiceAttachment(subject, email, attachment, body, attachmentFileName);
-            } catch (MessagingException e) {
-                throw new RuntimeException(e);
-            }
+                // Create the temporary file before using it
+                tempPdfFile = File.createTempFile("invoice", ".pdf");
 
-            // delete the temporary file
-            if (attachment.exists()) {
-                attachment.delete();
+                // Generate the PDF and write to the temporary file
+                try (FileOutputStream fos = new FileOutputStream(tempPdfFile);
+                     ByteArrayOutputStream pdfOutputStream = generateInvoicePdf()) {
+                    fos.write(pdfOutputStream.toByteArray());
+                }
+
+                // Prepare email details
+                String subject = "Reminder: Electricity Bill for [Month, Year]";
+                String customerName = "Shubham";
+                String month = "September";
+                String year = "2024";
+                String attachmentFileName = "Invoice";
+
+                String body = "Dear " + customerName + ",\n\n"
+                        + "I hope this message finds you well.\n\n"
+                        + "Please find attached your electricity bill for the month of " + month + ", " + year + ". We kindly request you to review the bill, which provides a detailed breakdown of your electricity usage and charges during the specified period.\n\n"
+                        + "If you have any questions or concerns regarding the bill, feel free to contact our support team, and we’ll be happy to assist you.\n\n"
+                        + "We appreciate your prompt attention to this matter. Kindly make the payment by the due date to avoid any service interruptions.\n\n"
+                        + "Thank you for choosing our service.\n\n"
+                        + "Best regards,\n"
+                        + "[Your Name]\n"
+                        + "[Your Company Name]\n"
+                        + "[Contact Information]";
+
+                // Send the email with the attachment
+                emailService.sendMailWithInvoiceAttachment(subject, email, tempPdfFile, body, attachmentFileName);
+            } catch (IOException | MessagingException e) {
+                logger.error("Error sending invoice on mail: " + e.getMessage(), e);
+            } finally {
+                // delete temp file after work
+                if (tempPdfFile != null && tempPdfFile.exists()) {
+                    boolean deleted = tempPdfFile.delete();
+                    if (!deleted) {
+                        logger.warn("Failed to delete temporary file: " + tempPdfFile.getAbsolutePath());
+                    }
+                }
             }
         };
 

@@ -1,5 +1,6 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.shubham.lightbill.lightbill_backend.constants.TransactionStatus;
@@ -19,9 +20,9 @@ public class Wallet {
     @Column(nullable = false, unique = true)
     private String walletId;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne()
     @JoinColumn(name = "userId", referencedColumnName = "userId", nullable = false, unique = true)
-    @JsonManagedReference
+    @JsonIgnoreProperties(value = {"bills", "wallet"})
     private User user;
 
     @Enumerated(EnumType.STRING)

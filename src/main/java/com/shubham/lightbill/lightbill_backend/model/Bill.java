@@ -1,5 +1,7 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.shubham.lightbill.lightbill_backend.constants.PaymentStatus;
 import jakarta.persistence.*;
@@ -20,11 +22,12 @@ public class Bill {
     @Column(nullable = false, unique = true)
     private String billId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "userId", referencedColumnName = "userId")
+    @JsonIgnoreProperties(value = {"wallet", "bills"})
     private User user;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String monthAndYear;
 
     @Column(nullable = false)
@@ -38,6 +41,9 @@ public class Bill {
 
     @Column(nullable = false)
     private Integer amount;
+
+    @Column(nullable = false)
+    private String meterNumber;
 
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Transaction> txnList;
