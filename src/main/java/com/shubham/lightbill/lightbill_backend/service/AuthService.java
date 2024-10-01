@@ -65,14 +65,14 @@ public class AuthService {
         return cookie;
     }
 
-    public User generateUser(SignUpDto req){
+    public User generateUser(SignUpDto req, Role role){
         User user = User.builder()
-                .userId(idGeneratorService.generateId(User.class.getName(), String.valueOf(req.getRole())))
+                .userId(idGeneratorService.generateId(User.class.getName(), String.valueOf(role)))
                 .name(req.getName())
                 .email(req.getEmail())
                 .phNo(req.getPhNo())
                 .address(req.getAddress())
-                .role(req.getRole())
+                .role(role)
                 .isActive(true)
                 .isBlocked(false)
                 .build();
@@ -89,8 +89,11 @@ public class AuthService {
         return walletRepository.save(wallet);
     }
 
-    public User signUpUser(@Valid SignUpDto req){
-        User user = generateUser(req);
+    public User signUpUser(SignUpDto req, Role role){
+        User currUser = userRepository.findByEmail(req.getEmail());
+        if(currUser != null) return currUser;
+
+        User user = generateUser(req, role);
 
         if(user.getRole() == Role.CUSTOMER){
             Wallet wallet = generateWallet(user);

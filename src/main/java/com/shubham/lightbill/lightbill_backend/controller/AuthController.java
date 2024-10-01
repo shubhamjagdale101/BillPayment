@@ -4,6 +4,7 @@ import com.shubham.lightbill.lightbill_backend.annotation.ValidEnum;
 import com.shubham.lightbill.lightbill_backend.annotation.WithRateLimitProtection;
 import com.shubham.lightbill.lightbill_backend.configuration.JwtUtil;
 import com.shubham.lightbill.lightbill_backend.constants.OtpType;
+import com.shubham.lightbill.lightbill_backend.constants.Role;
 import com.shubham.lightbill.lightbill_backend.dto.SignUpDto;
 import com.shubham.lightbill.lightbill_backend.model.User;
 import com.shubham.lightbill.lightbill_backend.repository.UserRepository;
@@ -65,7 +66,7 @@ public class AuthController {
 
     @PostMapping("/signUpUser")
     public ApiResponse<User> signUpUser(@Valid @RequestBody SignUpDto req){
-        User user = authservice.signUpUser(req);
+        User user = authservice.signUpUser(req, Role.CUSTOMER);
         return ApiResponse.success(user, "", 200);
     }
 }

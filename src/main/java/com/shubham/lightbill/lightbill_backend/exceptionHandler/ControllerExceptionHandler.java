@@ -32,7 +32,7 @@ public class ControllerExceptionHandler {
     }
 
     private ApiResponse<Object> handleDataIntegrityException(DataIntegrityViolationException e){
-        return ApiResponse.error("Data Integrity violation", HttpStatus.CONFLICT.value());
+        return ApiResponse.error("Data Integrity violation" + e.getRootCause(), HttpStatus.CONFLICT.value());
     }
 
     private ApiResponse<Object> handleValidationException(MethodArgumentNotValidException e) {

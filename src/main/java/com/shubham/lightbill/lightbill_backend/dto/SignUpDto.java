@@ -22,5 +22,4 @@ public class SignUpDto {
     @NotBlank
     private String address;
     private String meterNumber;
-    private Role role;
 }

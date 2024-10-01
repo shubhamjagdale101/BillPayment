@@ -2,56 +2,73 @@ package com.shubham.lightbill.lightbill_backend.service;
 
 import com.cloudinary.Cloudinary;
 import com.lowagie.text.DocumentException;
+import com.shubham.lightbill.lightbill_backend.constants.PaymentStatus;
+import com.shubham.lightbill.lightbill_backend.model.Bill;
 import com.shubham.lightbill.lightbill_backend.model.Consumption;
+import com.shubham.lightbill.lightbill_backend.model.User;
+import com.shubham.lightbill.lightbill_backend.repository.BillRepository;
+import com.shubham.lightbill.lightbill_backend.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class PdfService {
     @Autowired
     private Cloudinary cloudinary;
-
     @Autowired
     private SpringTemplateEngine templateEngine;
-
     @Autowired
     private EmailService emailService;
-
     @Autowired
     private ThreadPoolService threadPoolService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private BillService billService;
+
     private static final Logger logger = LoggerFactory.getLogger(PdfService.class);
 
-    public String prepareInvoiceHtmlFile(){
-        String customerName = "John Doe";
-        String customerAddress = "123 Main St, Springfield";
-        String meterNumber = "123456789";
-        String dueDate = "2024-12-15";
-        double amountBeforeDueDate = 100.00;
-        double amountAfterDueDate = 120.00;
-        double totalAmountDue = 100.00;
+    public String prepareInvoiceHtmlFile(User user){
+        List<Bill> bills = billService.getBillsOfPastSixMonths(user);
+
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd:MM:yyyy");
+
+        Integer unitConsumption = bills.get(0).getUnitConsumption();
+        String customerName = user.getName();
+        String customerAddress = user.getAddress();
+        String meterNumber = user.getMeterNumber();
+        String dueDate = formatter.format(bills.get(0).getDueDate());
+        double amountBeforeDueDate = bills.get(0).getAmount() - bills.get(0).getDiscount();
+        double amountAfterDueDate = bills.get(0).getAmount();
+        double totalAmountDue = 00.00;
+        String currMonth = monthFormat.format(bills.get(0).getMonthOfTheBill());
 
         // Sample consumption data
-        List<Consumption> consumptionSummary = Arrays.asList(
-                new Consumption("July", 150, 75.00),
-                new Consumption("August", 160, 80.00),
-                new Consumption("September", 170, 85.00),
-                new Consumption("October", 180, 90.00),
-                new Consumption("November", 190, 95.00)
-        );
+        List<Consumption> consumptionSummary = new ArrayList<>();
+
+        for (Bill bill : bills){
+            consumptionSummary.add(new Consumption(
+                    monthFormat.format(bill.getMonthOfTheBill()),
+                    bill.getUnitConsumption(),
+                    bill.getAmount(),
+                    bill.getPaymentStatus() == PaymentStatus.PAID
+            ));
+            if(bill.getPaymentStatus() != PaymentStatus.PAID) totalAmountDue += bill.getAmount();
+        }
 
         // Create Thymeleaf Context
         Context context = new Context();
@@ -63,13 +80,13 @@ public class PdfService {
         context.setVariable("amountAfterDueDate", amountAfterDueDate);
         context.setVariable("totalAmountDue", totalAmountDue);
         context.setVariable("consumptionSummary", consumptionSummary);
-        context.setVariable("currentMonthConsumption", new Consumption("December", 190, 95.00));
+        context.setVariable("currentMonthConsumption", new Consumption(currMonth, unitConsumption, amountAfterDueDate, false));
 
         return templateEngine.process("invoice-template.html", context);
     }
 
-    public ByteArrayOutputStream generateInvoicePdf() throws IOException {
-        String htmlContent = prepareInvoiceHtmlFile();
+    public ByteArrayOutputStream generateInvoicePdf(User user) throws IOException {
+        String htmlContent = prepareInvoiceHtmlFile(user);
 
         // Parse the HTML to a Jsoup Document
         Document document = Jsoup.parse(htmlContent, "UTF-8");
@@ -98,8 +115,11 @@ public class PdfService {
     }
 
     public String generateAndUploadInvoice() throws IOException {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByUserId(userId);
+
         // Step 1: Generate the PDF and write it to a temporary file
-        ByteArrayOutputStream pdfOutputStream = generateInvoicePdf();
+        ByteArrayOutputStream pdfOutputStream = generateInvoicePdf(user);
         File tempPdfFile = null;
         UUID uid = UUID.randomUUID();
 
@@ -135,39 +155,45 @@ public class PdfService {
         }
     }
 
-    public void sendInvoiceOnMail(String email) throws IOException, MessagingException {
+    public void prepareEmailAndSend(String email, File attachmentFile, String monthAndYear, String meterNumber, User user) throws MessagingException {
+        // Prepare email details
+        String subject = "Reminder: Electricity Bill for [Month, Year]";
+        String customerName = "Shubham";
+        String month = "September";
+        String year = "2024";
+        String attachmentFileName = "Invoice";
+
+        String body = "Dear " + customerName + ",\n\n"
+                + "I hope this message finds you well.\n\n"
+                + "Please find attached your electricity bill for the month of " + monthAndYear + " for meter " + meterNumber + " . We kindly request you to review the bill, which provides a detailed breakdown of your electricity usage and charges during the specified period.\n\n"
+                + "If you have any questions or concerns regarding the bill, feel free to contact our support team, and we’ll be happy to assist you.\n\n"
+                + "We appreciate your prompt attention to this matter. Kindly make the payment by the due date to avoid any service interruptions.\n\n"
+                + "Thank you for choosing our service.\n\n"
+                + "Best regards,\n"
+                + "shubham Jagdale\n"
+                + "Finzly Bill Corporation\n"
+                + "+91 9397197132";
+
+        // Send the email with the attachment
+        emailService.sendMailWithInvoiceAttachment(subject, email, attachmentFile, body, attachmentFileName);
+    }
+
+    public void sendInvoiceOnMail(String userId) throws IOException, MessagingException {
+        User user = userRepository.findByUserId(userId);
+        SimpleDateFormat formatter = new SimpleDateFormat("MM/yyyy");
+        String email = user.getEmail();
+
         Runnable task = () -> {
             File tempPdfFile = null;
             try {
-                // Create the temporary file before using it
+                // create pdf file and generate file
                 tempPdfFile = File.createTempFile("invoice", ".pdf");
-
-                // Generate the PDF and write to the temporary file
                 try (FileOutputStream fos = new FileOutputStream(tempPdfFile);
-                     ByteArrayOutputStream pdfOutputStream = generateInvoicePdf()) {
+                     ByteArrayOutputStream pdfOutputStream = generateInvoicePdf(user)) {
                     fos.write(pdfOutputStream.toByteArray());
                 }
 
-                // Prepare email details
-                String subject = "Reminder: Electricity Bill for [Month, Year]";
-                String customerName = "Shubham";
-                String month = "September";
-                String year = "2024";
-                String attachmentFileName = "Invoice";
-
-                String body = "Dear " + customerName + ",\n\n"
-                        + "I hope this message finds you well.\n\n"
-                        + "Please find attached your electricity bill for the month of " + month + ", " + year + ". We kindly request you to review the bill, which provides a detailed breakdown of your electricity usage and charges during the specified period.\n\n"
-                        + "If you have any questions or concerns regarding the bill, feel free to contact our support team, and we’ll be happy to assist you.\n\n"
-                        + "We appreciate your prompt attention to this matter. Kindly make the payment by the due date to avoid any service interruptions.\n\n"
-                        + "Thank you for choosing our service.\n\n"
-                        + "Best regards,\n"
-                        + "[Your Name]\n"
-                        + "[Your Company Name]\n"
-                        + "[Contact Information]";
-
-                // Send the email with the attachment
-                emailService.sendMailWithInvoiceAttachment(subject, email, tempPdfFile, body, attachmentFileName);
+                prepareEmailAndSend(email, tempPdfFile, formatter.format(new Date()), user.getMeterNumber(), user);
             } catch (IOException | MessagingException e) {
                 logger.error("Error sending invoice on mail: " + e.getMessage(), e);
             } finally {

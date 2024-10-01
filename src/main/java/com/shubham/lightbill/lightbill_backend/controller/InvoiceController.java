@@ -6,6 +6,7 @@ import com.shubham.lightbill.lightbill_backend.service.PdfService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -31,11 +32,9 @@ public class InvoiceController {
     }
 
     @PostMapping("/invoiceEmail")
-    public ApiResponse<String> sendInvoiceEmail(@RequestBody Map<String, String> payload) throws Exception {
-        String email = payload.get("email");
-        if(email == null) throw new Exception("Email not found in request data");
-
-        pdfService.sendInvoiceOnMail(email);
+    public ApiResponse<String> sendInvoiceEmail() throws Exception {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        pdfService.sendInvoiceOnMail(userId);
         return ApiResponse.success(null, "Invoice mail will be send", HttpStatus.ACCEPTED.value());
     }
 }

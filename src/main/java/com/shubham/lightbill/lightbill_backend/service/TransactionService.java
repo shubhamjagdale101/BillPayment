@@ -5,6 +5,7 @@ import com.shubham.lightbill.lightbill_backend.constants.PaymentMethod;
 import com.shubham.lightbill.lightbill_backend.constants.TransactionStatus;
 import com.shubham.lightbill.lightbill_backend.model.Transaction;
 import com.shubham.lightbill.lightbill_backend.repository.TransactionRepository;
+import com.shubham.lightbill.lightbill_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,8 +18,15 @@ import java.util.List;
 public class TransactionService {
     @Autowired
     private TransactionRepository transactionRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public List<Transaction> getTransactionUsingPagination(Pageable pageable){
+        Page<Transaction> page = transactionRepository.findAll(pageable);
+        return page.getContent();
+    }
+
+    public List<Transaction> getTransactionUsingPaginationForUserId(String userid, Pageable pageable){
         Page<Transaction> page = transactionRepository.findAll(pageable);
         return page.getContent();
     }

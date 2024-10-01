@@ -1,5 +1,6 @@
 package com.shubham.lightbill.lightbill_backend.configuration;
 
+import com.shubham.lightbill.lightbill_backend.constants.Role;
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ public class WebSecurity implements WebMvcConfigurer {
         return http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/*").permitAll()
+                        .requestMatchers("/admin/**").hasAnyAuthority(String.valueOf(Role.ADMIN))
+                        .requestMatchers("/employee/**", "/excel/**").hasAnyAuthority(String.valueOf(Role.EMPLOYEE), String.valueOf(Role.ADMIN))
+                        .requestMatchers("/invoice/**", "/customer/**").hasAnyAuthority(String.valueOf(Role.EMPLOYEE), String.valueOf(Role.ADMIN), String.valueOf(Role.CUSTOMER))
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
