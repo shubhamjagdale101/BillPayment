@@ -1,6 +1,5 @@
 package com.shubham.lightbill.lightbill_backend.dto;
 
-import com.shubham.lightbill.lightbill_backend.annotation.ValidEnum;
 import com.shubham.lightbill.lightbill_backend.constants.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -19,7 +18,6 @@ public class SignUpDto {
     private String email;
     @Pattern(regexp = "^[789]\\d{9}$", message = "Invalid Phone Number")
     private String phNo;
-    @NotBlank
     private String address;
     private String meterNumber;
     private Role role;

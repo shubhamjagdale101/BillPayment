@@ -13,19 +13,13 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.net.URLEncoder;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")

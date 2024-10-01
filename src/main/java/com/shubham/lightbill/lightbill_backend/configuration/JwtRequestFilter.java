@@ -1,6 +1,5 @@
 package com.shubham.lightbill.lightbill_backend.configuration;
 
-import com.shubham.lightbill.lightbill_backend.custumExceptions.JwtAuthenticationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

@@ -47,4 +47,15 @@ public class EmailService {
 
         mailSender.send(message);
     }
+
+    public void sendEmailToEmployee(String employeeId, String email) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message,true);
+
+        helper.setTo(email);
+        helper.setSubject("Welcome to the BBC Company");
+        helper.setText("Hello, your Employee ID is: " + employeeId,true);
+
+        mailSender.send(message);
+    }
 }
