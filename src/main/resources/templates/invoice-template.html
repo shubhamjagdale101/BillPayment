@@ -96,6 +96,13 @@
             text-align: right;
             margin-top: 20px;
         }
+        .status-paid {
+            color: green;
+        }
+
+        .status-unpaid {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -131,7 +138,7 @@
             <tr th:if="${currentMonthConsumption != null}">
                 <td th:text="${currentMonthConsumption.month}"></td>
                 <td th:text="${currentMonthConsumption.units}"></td>
-                <td th:text="${currentMonthConsumption.amount}"></td>
+                <td th:class="${currentMonthConsumption.paid} ? 'status-paid' : 'status-unpaid'" th:text="${currentMonthConsumption.amount}"></td>
             </tr>
             </tbody>
         </table>

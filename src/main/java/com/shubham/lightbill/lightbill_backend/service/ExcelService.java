@@ -7,19 +7,16 @@ import com.shubham.lightbill.lightbill_backend.model.Bill;
 import com.shubham.lightbill.lightbill_backend.model.User;
 import com.shubham.lightbill.lightbill_backend.repository.UserRepository;
 import com.shubham.lightbill.lightbill_backend.repository.WalletRepository;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 public class ExcelService {
@@ -32,12 +29,33 @@ public class ExcelService {
     @Autowired
     private BillService billService;
 
-    public SignUpDto convertToSignUpDto(Row row){
+    private Boolean checkForDtoConversion(String[] fields, Map<String, Integer> fieldMappingWithIndex){
+        for (String field : fields) {
+            if (!fieldMappingWithIndex.containsKey(field)) return false;
+        }
+        return true;
+    }
+
+    private Boolean checkForSignUpDtoConversion(Map<String, Integer> fieldMappingWithIndex){
+        String[] fields = {"Name", "Email", "Address", "Phone Number"};
+        return checkForDtoConversion(fields, fieldMappingWithIndex);
+    }
+
+    private Boolean checkForBillDtoConversion(Map<String, Integer> fieldMappingWithIndex){
+        String[] fields = {"User Id", "MYear And Month", "Unit Consumption", "Due Date"};
+        return checkForDtoConversion(fields, fieldMappingWithIndex);
+    }
+
+    private SignUpDto convertToSignUpDto(Row row, Map<String, Integer> fieldMappingWithIndex) throws Exception {
+        if(!checkForSignUpDtoConversion(fieldMappingWithIndex)){
+            throw new Exception("fields name are improper");
+        }
+
         String name, email, phoneNo, address, phNo;
-        name = row.getCell(0).getStringCellValue();
-        email = row.getCell(1).getStringCellValue();
-        address = row.getCell(3).getStringCellValue();
-        phNo = row.getCell(4).getStringCellValue();
+        name = row.getCell(fieldMappingWithIndex.get("Name")).getStringCellValue();
+        email = row.getCell(fieldMappingWithIndex.get("Email")).getStringCellValue();
+        address = row.getCell(fieldMappingWithIndex.get("Address")).getStringCellValue();
+        phNo = row.getCell(fieldMappingWithIndex.get("Phone Number")).getStringCellValue();
         Role role = Role.CUSTOMER;
 
 
@@ -48,32 +66,47 @@ public class ExcelService {
                 .address(address)
                 .name(name)
                 .email(email)
-                .role(role)
                 .phNo(phNo)
                 .build();
     }
 
-    public BillDto convertToBillDto(Row row){
-        String userId = row.getCell(0).getStringCellValue();
-        String monthAndYear = row.getCell(1).getStringCellValue();
-        Integer unitConsumption = (int) row.getCell(2).getNumericCellValue();
-        Date dueDate = row.getCell(3).getDateCellValue();
+    private BillDto convertToBillDto(Row row, Map<String, Integer> fieldMappingWithIndex) throws Exception {
+        if(checkForBillDtoConversion(fieldMappingWithIndex)){
+            throw new Exception("fields name are improper");
+        }
+
+        String userId = row.getCell(fieldMappingWithIndex.get("User Id")).getStringCellValue();
+        String yearAndMonth = row.getCell(fieldMappingWithIndex.get("Year And Month")).getStringCellValue();
+        Integer unitConsumption = (int) row.getCell(fieldMappingWithIndex.get("Unit Consumption")).getNumericCellValue();
+        Date dueDate = row.getCell(fieldMappingWithIndex.get("Due Date")).getDateCellValue();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate localDate = LocalDate.parse(yearAndMonth, formatter);
+        Date date = java.sql.Date.valueOf(localDate);
 
         return BillDto.builder()
                 .userId(userId)
-                .monthAndYear(monthAndYear)
+                .monthOfTheBill(date)
                 .unitConsumption(unitConsumption)
                 .dueDate(dueDate)
                 .build();
     }
 
-    public List<Object> saveExcelToDatabase(MultipartFile file, String className){
+    private void fieldMappingToBill(Row row, Map<String, Integer> fieldMappingWithIndex){
+        for (int i = 0; i < row.getPhysicalNumberOfCells(); i++) {
+            Cell cell = row.getCell(i);
+            fieldMappingWithIndex.put(cell.getStringCellValue(), i);
+        }
+    }
+
+    public List<Object> saveExcelToDatabase(MultipartFile file, String className, Role role){
         List<Object> finalResult = new ArrayList<>();
         try(
             InputStream inputStream = file.getInputStream();
             Workbook workbook = new XSSFWorkbook(inputStream);
         ){
             Sheet sheet = workbook.getSheetAt(0);
+            Map<String, Integer> fieldMappingWithIndex = new HashMap<>();
 
             for (Row currRow : sheet) {
                 if (currRow.getRowNum() == 0) {
@@ -81,12 +114,12 @@ public class ExcelService {
                 }
 
                 if(className.equals(User.class.getName())){
-                    SignUpDto signUp = convertToSignUpDto(currRow);
-                    User user = authService.signUpUser(signUp);
+                    SignUpDto signUp = convertToSignUpDto(currRow, fieldMappingWithIndex);
+                    User user = authService.signUpUser(signUp, role);
                     finalResult.add(user);
                 }
                 else if(className.equals(Bill.class.getName())){
-                    BillDto billDto = convertToBillDto(currRow);
+                    BillDto billDto = convertToBillDto(currRow, fieldMappingWithIndex);
                     Bill bill = billService.addBill(billDto);
                     finalResult.add(bill);
                 }
@@ -98,7 +131,7 @@ public class ExcelService {
         return finalResult;
     }
 
-    public List<Object> addBulkBill(MultipartFile file){
-        return saveExcelToDatabase(file, Bill.class.getName());
+    public List<Object> addBulkBill(MultipartFile file, Role role){
+        return saveExcelToDatabase(file, Bill.class.getName(), role);
     }
 }

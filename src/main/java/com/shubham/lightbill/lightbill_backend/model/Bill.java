@@ -28,7 +28,7 @@ public class Bill {
     private User user;
 
     @Column(nullable = false)
-    private String monthAndYear;
+    private Date monthOfTheBill;
 
     @Column(nullable = false)
     private Integer unitConsumption;
@@ -45,7 +45,7 @@ public class Bill {
     @Column(nullable = false)
     private String meterNumber;
 
-    @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "bill", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Transaction> txnList;
 
     @Enumerated(value = EnumType.STRING)

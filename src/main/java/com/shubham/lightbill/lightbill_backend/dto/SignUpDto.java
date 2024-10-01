@@ -20,5 +20,4 @@ public class SignUpDto {
     private String phNo;
     private String address;
     private String meterNumber;
-    private Role role;
 }

@@ -1,5 +1,6 @@
 package com.shubham.lightbill.lightbill_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.shubham.lightbill.lightbill_backend.constants.PaymentMethod;
 import com.shubham.lightbill.lightbill_backend.constants.TransactionStatus;
 import jakarta.persistence.*;
@@ -16,9 +17,14 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String txnId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "billId", referencedColumnName = "billId", nullable = false)
+    @JsonIgnoreProperties(value = {"txnList"})
     private Bill bill;
+
+    @ManyToOne()
+    @JoinColumn(name = "userId", referencedColumnName = "userId")
+    private User user;
 
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
