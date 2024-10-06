@@ -63,9 +63,9 @@ public class EmployeeService {
         return billService.addBill(req);
     }
 
-    public List<User> getUserWithCustomerRoleWithPagination(Pageable pageable){
+    public Page<User> getUserWithCustomerRoleWithPagination(Pageable pageable){
         Page<User> page = userRepository.findByRole(Role.CUSTOMER, pageable);
-        return page.getContent();
+        return page;
     }
 
     public User getEmployeeProfile(String userId){

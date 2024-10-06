@@ -18,6 +18,7 @@ public class SignUpDto {
     private String email;
     @Pattern(regexp = "^[789]\\d{9}$", message = "Invalid Phone Number")
     private String phNo;
+    @NotBlank(message = "address is necessary field")
     private String address;
     private String meterNumber;
 }

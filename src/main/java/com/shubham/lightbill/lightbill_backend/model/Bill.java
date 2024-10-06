@@ -37,10 +37,10 @@ public class Bill {
     private Date dueDate;
 
     @Column(nullable = false)
-    private Integer discount;
+    private Double discount;
 
     @Column(nullable = false)
-    private Integer amount;
+    private Double amount;
 
     @Column(nullable = false)
     private String meterNumber;

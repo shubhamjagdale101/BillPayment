@@ -141,4 +141,8 @@ public class AuthService {
 
         return duration <= otpExpirationTime && Objects.equals(userOtp, dbOtp.getOtp());
     }
+
+    public boolean checkIfEmailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
 }

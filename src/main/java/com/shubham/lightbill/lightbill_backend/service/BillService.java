@@ -25,11 +25,11 @@ public class BillService {
     @Autowired
     private IdGeneratorService idGeneratorService;
 
-    private int getDiscountAmount(int amount){
-        return (int) Math.min(amount * 0.05, 20);
+    private double getDiscountAmount(double amount){
+        return Math.min(amount * 0.05, 20);
     }
-    private int getAmountForConsumption(int unitConsumptionOfElectricity) {
-        return unitConsumptionOfElectricity * 10;
+    private double getAmountForConsumption(int unitConsumptionOfElectricity) {
+        return unitConsumptionOfElectricity * 0.04150;
     }
 
     public Bill addBill(BillDto req) throws Exception {
@@ -39,7 +39,7 @@ public class BillService {
         Bill currBill = billRepository.findByUserAndMonthOfTheBill(user, req.getMonthOfTheBill());
         if(currBill != null) return currBill;
 
-        int amount = getAmountForConsumption(req.getUnitConsumption());
+        double amount = getAmountForConsumption(req.getUnitConsumption());
         Bill bill = Bill.builder()
                 .meterNumber(user.getMeterNumber())
                 .billId(idGeneratorService.generateId(Bill.class.getName(), "Bill"))
@@ -69,5 +69,10 @@ public class BillService {
         Pageable pageable = PageRequest.of(0, 6, Sort.by("monthOfTheBill").descending());
         Page<Bill> page = billRepository.findByUser(user, pageable);
         return page.getContent();
+    }
+
+
+    public Bill findBillById(String billId) {
+        return billRepository.findByBillId(billId);
     }
 }

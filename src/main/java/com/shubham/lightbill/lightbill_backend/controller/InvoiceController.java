@@ -10,10 +10,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.*;
 
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200", allowCredentials="true")
 @RequestMapping("/invoice")
 public class InvoiceController {
     @Autowired

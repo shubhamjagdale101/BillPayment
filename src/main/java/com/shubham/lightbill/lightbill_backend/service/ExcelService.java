@@ -42,7 +42,7 @@ public class ExcelService {
     }
 
     private Boolean checkForBillDtoConversion(Map<String, Integer> fieldMappingWithIndex){
-        String[] fields = {"User Id", "MYear And Month", "Unit Consumption", "Due Date"};
+        String[] fields = {"User Id","Unit Consumption", "Year And Month", "Due Date"};
         return checkForDtoConversion(fields, fieldMappingWithIndex);
     }
 
@@ -76,6 +76,7 @@ public class ExcelService {
         }
 
         String userId = row.getCell(fieldMappingWithIndex.get("User Id")).getStringCellValue();
+        Integer unitConsumption = (int) row.getCell(fieldMappingWithIndex.get("Unit Consumption")).getNumericCellValue();
         String yearAndMonth = row.getCell(fieldMappingWithIndex.get("Year And Month")).getStringCellValue();
         Integer unitConsumption = (int) row.getCell(fieldMappingWithIndex.get("Unit Consumption")).getNumericCellValue();
         Date dueDate = row.getCell(fieldMappingWithIndex.get("Due Date")).getDateCellValue();
@@ -92,7 +93,7 @@ public class ExcelService {
                 .build();
     }
 
-    private void fieldMappingToBill(Row row, Map<String, Integer> fieldMappingWithIndex){
+    private void fieldMapping(Row row, Map<String, Integer> fieldMappingWithIndex){
         for (int i = 0; i < row.getPhysicalNumberOfCells(); i++) {
             Cell cell = row.getCell(i);
             fieldMappingWithIndex.put(cell.getStringCellValue(), i);
@@ -110,6 +111,7 @@ public class ExcelService {
 
             for (Row currRow : sheet) {
                 if (currRow.getRowNum() == 0) {
+                    fieldMapping(currRow, fieldMappingWithIndex);
                     continue;
                 }
 

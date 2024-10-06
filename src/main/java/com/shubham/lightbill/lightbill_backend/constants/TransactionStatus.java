@@ -6,5 +6,7 @@ public enum TransactionStatus {
     FAILED,
     CANCELED,
     DECLINED,
+    PAID,
+    UNPAID,
     EXPIRED;
 }

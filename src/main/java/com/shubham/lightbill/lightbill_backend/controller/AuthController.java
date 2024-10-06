@@ -58,6 +58,22 @@ public class AuthController {
         return ApiResponse.success("login successful", URLEncoder.encode(token), HttpStatus.OK.value());
     }
 
+    @GetMapping("/check-email")
+    public ResponseEntity<ApiResponse<String>> checkEmailExists(@RequestParam String email) {
+        boolean emailExists = authservice.checkIfEmailExists(email);
+        if (emailExists) {
+            // If the email already exists, return an error response
+            return ResponseEntity
+                    .status(409) // HTTP 409 Conflict
+                    .body(ApiResponse.error("Email already exists", 409));
+        } else {
+            // If the email is available, return a success response
+            return ResponseEntity
+                    .status(200) // HTTP 200 OK
+                    .body(ApiResponse.success(null, "Email is available", 200));
+        }
+    }
+
     @PostMapping("/signUpUser")
     public ApiResponse<User> signUpUser(@Valid @RequestBody SignUpDto req){
         User user = authservice.signUpUser(req, Role.CUSTOMER);

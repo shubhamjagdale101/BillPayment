@@ -8,7 +8,6 @@ import com.shubham.lightbill.lightbill_backend.repository.TransactionRepository;
 import com.shubham.lightbill.lightbill_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -57,5 +56,23 @@ public class TransactionService {
         } else {
             throw new Exception("filter " + filterBy + " not supported");
         }
+    }
+
+    public Transaction markPaymentAsCash(String txnId) throws Exception {
+        // Fetch the transaction
+        Transaction transaction = transactionRepository.findById(txnId)
+                .orElseThrow(() -> new Exception("Transaction not found"));
+
+        // Check if the transaction is already paid
+        if (transaction.getTransactionStatus().equals(TransactionStatus.PAID)) {
+            throw new Exception("Transaction is already marked as paid");
+        }
+
+        // Mark the transaction as paid
+        transaction.setTransactionStatus(TransactionStatus.PAID);
+        transaction.setPaymentMethod(PaymentMethod.CASH);
+
+        // Save and return the updated transaction
+        return transactionRepository.save(transaction);
     }
 }
